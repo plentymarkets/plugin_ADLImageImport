@@ -1,0 +1,32 @@
+{
+    "name": "ADLImageImport",
+    "marketplaceName":
+    {
+        "de": "ADLImageImport",
+        "en": "ADLImageImport"
+    },
+    "platform" : {
+        "php" : ">=7.3,<8.1"
+      },
+    "namespace": "ADLImageImport",
+    "author": "plentysystems AG",
+    "type": "backend",
+    "version": "1.0.0",
+    "isClosedSource": true,
+    "authorIcon": "icon_author_xs.png",
+    "pluginIcon": "icon_plugin_xs.png",
+    "email": "info@plentymarkets.com",
+    "phone": "",
+    "description": "ADLImageImport",
+    "shortDescription": {
+        "de": "ADLImageImport short description",
+        "en": "ADLImageImport short description"
+    },
+    "keywords": ["ADLImageImport"],
+    "categories": ["4124"],
+    "serviceProvider": "ADLImageImport\\Providers\\PluginServiceProvider",
+    "runOnBuild": [],
+    "dependencies": {
+        "guzzlehttp/guzzle": "^7.0"
+    }
+}
