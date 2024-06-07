@@ -8,21 +8,8 @@ $user       = SdkRestApi::getParam('user');
 $password   = SdkRestApi::getParam('password');
 $port       = SdkRestApi::getParam('port');
 $path       = trim(SdkRestApi::getParam('folderPath'), '/');
+$fileName   = SdkRestApi::getParam('fileName');
 
 $ftp = new FtpClient($protocol, $host, $user, $password, $port);
 
-$allEntries = $ftp->getFileNames($path);
-
-$files = [];
-
-foreach ($allEntries as $entry) {
-
-    if(empty($entry) || is_dir($entry)){
-        continue;
-    }
-    $files[] = $entry;
-}
-
-asort($files);
-
-return $files;
+return $ftp->downloadFile($path . '/' . $fileName);

@@ -49,39 +49,6 @@ class FtpClient
     }
 
     /**
-     * Upload a file to FTP
-     *
-     * @param          $fileName
-     * @param  string  $content
-     * @return bool
-     * @throws Exception
-     */
-    public function upload($fileName, string $content)
-    {
-        if ($fp = fopen('php://temp', 'w+')) {
-            try {
-                fwrite($fp, $content);
-                rewind($fp);
-                $this->curlHandle = $this->connect($fileName);
-                curl_setopt($this->curlHandle, CURLOPT_UPLOAD, 1);
-                curl_setopt($this->curlHandle, CURLOPT_INFILE, $fp);
-                curl_exec($this->curlHandle);
-                $err = curl_error($this->curlHandle);
-
-                if ($err) {
-                    throw new \Exception($err);
-                }
-
-                return !$err;
-            } finally {
-                fclose($fp);
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * @param  string  $remote
      *
      * @return false|int|resource
@@ -164,40 +131,5 @@ class FtpClient
             throw $exception;
         }
 
-    }
-
-    /**
-     * Renames a given FTP file path.
-     *
-     * @param  string  $currentFilePath
-     * @param  string  $currentFolderPath
-     * @param  string  $newFilePath
-     *
-     * @return bool
-     *
-     * @throws Exception
-     */
-    public function rename(string $currentFilePath, string $currentFolderPath, string $newFilePath)
-    {
-        try {
-            $quote = [
-                "RNFR $currentFilePath",
-                "RNTO $newFilePath"
-            ];
-
-            $this->curlHandle = $this->connect($currentFolderPath);
-
-            curl_setopt($this->curlHandle, CURLOPT_QUOTE, $quote);
-            curl_setopt($this->curlHandle, CURLOPT_RETURNTRANSFER, 1);
-            curl_exec($this->curlHandle);
-
-            if (curl_errno($this->curlHandle)) {
-                throw new \Exception(curl_error($this->curlHandle));
-            }
-
-            return true;
-        } catch (\Exception $exception) {
-            throw $exception;
-        }
     }
 }

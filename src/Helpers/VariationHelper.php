@@ -54,23 +54,23 @@ class VariationHelper
         /** @var ItemImage[] $imageList */
         $imageList = $itemImageRepository->findByVariationId($variationId);
 
+        $imageData['position'] = $position;
         $addedImage = $itemImageRepository->upload($imageData);
 
         if (isset($addedImage['id'])){
             $imageData['imageId'] = $addedImage['id'];
-            $imageData['position'] = $position;
 
             /** @var VariationImageRepositoryContract $variationImageRepository */
             $variationImageRepository = pluginApp(VariationImageRepositoryContract::class);
             /** @var VariationImage $variationImage */
             $variationImage = $variationImageRepository->create($imageData);
 
-            if ( ($variationImage->imageId === $imageData['imageId']) && isset($imageList[$position + 1])){
+            if ( ($variationImage->imageId === $imageData['imageId']) && isset($imageList[$position])){
                 /* Drop the image that was previously on the specified position (if exists)
                    If the specified position for the added image is greater than the last position,
                    the new image will be added at the end of the list.*/
                 /** @var DeleteResponse $response */
-                $response = $itemImageRepository->delete($imageList[$position + 1]['id'])->toArray();
+                $response = $itemImageRepository->delete($imageList[$position]['id'])->toArray();
                 if ($response['affectedRows'] === 1){
                     return true;
                 } else {
