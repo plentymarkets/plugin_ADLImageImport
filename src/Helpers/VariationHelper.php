@@ -52,7 +52,7 @@ class VariationHelper
         $itemImageRepository = pluginApp(ItemImageRepositoryContract::class);
 
         /** @var ItemImage[] $imageList */
-        $imageList = $itemImageRepository->findByVariationId($variationId);
+        $imageList = $itemImageRepository->findByItemId($imageData['itemId']);
 
         $imageData['position'] = $position;
         $addedImage = $itemImageRepository->upload($imageData);
@@ -65,23 +65,26 @@ class VariationHelper
             /** @var VariationImage $variationImage */
             $variationImage = $variationImageRepository->create($imageData);
 
-            if ( ($variationImage->imageId === $imageData['imageId']) && isset($imageList[$position])){
+            if ($variationImage->imageId === $imageData['imageId']){
                 /* Drop the image that was previously on the specified position (if exists)
                    If the specified position for the added image is greater than the last position,
                    the new image will be added at the end of the list.*/
                 /** @var DeleteResponse $response */
-                $response = $itemImageRepository->delete($imageList[$position]['id'])->toArray();
-                if ($response['affectedRows'] === 1){
-                    return true;
-                } else {
-                    //the new image was added but the previous could not be deleted
-                    $this->getLogger(__METHOD__)
-                        ->error(PluginConfiguration::PLUGIN_NAME . '::error.previousImageError',
-                            [
-                                'response'  => $response
-                            ]
-                        );
+                foreach ($imageList as $image){
+                    if ($image['position'] == $imageData['position']){
+                        $response = $itemImageRepository->delete($image['id'])->toArray();
+                        if ($response['affectedRows'] !== 1){
+                            $this->getLogger(__METHOD__)
+                                ->error(PluginConfiguration::PLUGIN_NAME . '::error.previousImageError',
+                                    [
+                                        'response'  => $response
+                                    ]
+                            );
+                        }
+                        break;
+                    }
                 }
+                return true;
             }
         }
         return false;
