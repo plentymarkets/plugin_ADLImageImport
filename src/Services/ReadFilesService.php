@@ -86,7 +86,7 @@ class ReadFilesService
         if (count($dataParts) != 2){
             $fileData['error'] = 'File structure corrupt!';
         } else {
-            $fileData['variationNumber'] = $dataParts[0];
+            $fileData['externalId'] = $dataParts[0];
             $dataParts = explode('.', $dataParts[1]);
             if (count($dataParts) != 2){
                 $fileData['error'] = 'Image position and file extension can not be separated!';
@@ -101,12 +101,12 @@ class ReadFilesService
     private function deleteFileFromFtp($fileName)
     {
         try {
-            $files = $this->sftpClient->deleteFile($fileName);
+            $result = $this->sftpClient->deleteFile($fileName);
         } catch (\Exception $exception) {
             return $exception->getMessage();
         }
 
-        return $files;
+        return $result;
     }
 
     /**
@@ -119,6 +119,7 @@ class ReadFilesService
         $files = $this->getFtpFileNames();
 
         foreach ($files as $file){
+            $fileImportError = false;
             $fileData = $this->getDataFromFileName($file);
             if (isset($fileData['error'])){
                 $this->getLogger(__METHOD__)
@@ -131,43 +132,62 @@ class ReadFilesService
                 continue;
             }
 
-            $variation = $this->variationHelper->getVariationByNumber($fileData['variationNumber']);
-            if (is_null($variation)){
+            $variations = $this->variationHelper->getVariationsByExternalId($fileData['externalId']);
+            if (count($variations) == 0) {
                 $this->getLogger(__METHOD__)
-                    ->error(PluginConfiguration::PLUGIN_NAME . '::error.readFilesError',
+                    ->error(
+                        PluginConfiguration::PLUGIN_NAME . '::error.readFilesError',
                         [
-                            'errorMsg'  => 'There is no variation with this variation number:' . $fileData['variationNumber'],
-                            'fileName'  => $file
+                            'errorMsg' => 'There are no variations with this external ID:' . $fileData['externalId'],
+                            'fileName' => $file
                         ]
                     );
                 continue;
             }
+            foreach ($variations as $variation) {
+                if (is_null($variation)) {
+                    $this->getLogger(__METHOD__)
+                        ->error(
+                            PluginConfiguration::PLUGIN_NAME . '::error.readFilesError',
+                            [
+                                'errorMsg' => 'There is no variation with this external ID:' . $fileData['externalId'],
+                                'fileName' => $file
+                            ]
+                        );
+                    $fileImportError = true;
+                    break;
+                }
 
-            $fileData['itemId'] = $variation['itemId'];
-            $fileData['variationId'] = $variation['variationId'];
-            $fileData['imageData'] = $this->getFileContents($file);
+                $fileData['itemId'] = $variation['itemId'];
+                $fileData['variationId'] = $variation['variationId'];
+                $fileData['imageData'] = $this->getFileContents($file);
 
-            if ($this->variationHelper->addImageToVariation(
-                [
-                    'fileType'          => $fileData['fileExtension'],
-                    'uploadFileName'    => $fileData['fileName'],
-                    'uploadImageData'   => $fileData['imageData'],
-                    'itemId'            => $fileData['itemId'],
-                    'variationId'       => $fileData['variationId'],
-                ],
-                (int)$fileData['variationId'],
-                (int)$fileData['imagePosition'])
-            ){
+                if (!$this->variationHelper->addImageToVariation(
+                    [
+                        'fileType' => $fileData['fileExtension'],
+                        'uploadFileName' => $fileData['fileName'],
+                        'uploadImageData' => $fileData['imageData'],
+                        'itemId' => $fileData['itemId'],
+                        'variationId' => $fileData['variationId'],
+                    ],
+                    (int)$fileData['variationId'],
+                    (int)$fileData['imagePosition']
+                )
+                ) {
+                    $this->getLogger(__METHOD__)
+                        ->error(
+                            PluginConfiguration::PLUGIN_NAME . '::error.readFilesError',
+                            [
+                                'errorMsg' => 'The image could not be imported!',
+                                'fileName' => $file
+                            ]
+                        );
+                    $fileImportError = true;
+                }
+            }
+            if (!$fileImportError){
                 $fileData['deleted'] = $this->deleteFileFromFtp($file);
                 $filesImportedSuccessfully++;
-            } else {
-                $this->getLogger(__METHOD__)
-                    ->error(PluginConfiguration::PLUGIN_NAME . '::error.readFilesError',
-                        [
-                            'errorMsg'  => 'The image could not be imported!',
-                            'fileName'  => $file
-                        ]
-                    );
             }
         }
 

@@ -41,6 +41,22 @@ class VariationHelper
     }
 
     /**
+     * @param $externalId
+     * @return mixed|null
+     */
+    public function getVariationsByExternalId($externalId)
+    {
+        $this->variationLookupRepository->hasExternalId($externalId);
+        $lookupResult = $this->variationLookupRepository->lookup();
+
+        if (!empty($lookupResult)) {
+            return $lookupResult;
+        }
+
+        return null;
+    }
+
+    /**
      * @param array $imageData
      * @param int $variationId
      * @param int $position
