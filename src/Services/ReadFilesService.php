@@ -144,6 +144,8 @@ class ReadFilesService
                     );
                 continue;
             }
+            $fileData['imageData'] = $this->getFileContents($file);
+            $logData = [];
             foreach ($variations as $variation) {
                 if (is_null($variation)) {
                     $this->getLogger(__METHOD__)
@@ -160,7 +162,11 @@ class ReadFilesService
 
                 $fileData['itemId'] = $variation['itemId'];
                 $fileData['variationId'] = $variation['variationId'];
-                $fileData['imageData'] = $this->getFileContents($file);
+
+                $logData[] = [
+                    'item'  => $fileData['itemId'],
+                    'variation' => $fileData['variationId']
+                ];
 
                 if (!$this->variationHelper->addImageToVariation(
                     [
@@ -189,6 +195,11 @@ class ReadFilesService
                 $fileData['deleted'] = $this->deleteFileFromFtp($file);
                 $filesImportedSuccessfully++;
             }
+            $this->getLogger(__METHOD__)
+                ->info(
+                    PluginConfiguration::PLUGIN_NAME . '::general.infoMessage',
+                    $logData
+                );
         }
 
         return $filesImportedSuccessfully . ' out of ' . count($files) . ' files imported successfully.';
