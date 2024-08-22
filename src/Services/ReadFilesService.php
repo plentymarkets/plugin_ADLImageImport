@@ -198,7 +198,10 @@ class ReadFilesService
             $this->getLogger(__METHOD__)
                 ->info(
                     PluginConfiguration::PLUGIN_NAME . '::general.infoMessage',
-                    $logData
+                    [
+                        'fileName'  => $file,
+                        'variations' => $logData
+                    ]
                 );
         }
 
