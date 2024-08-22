@@ -47,7 +47,7 @@ class VariationHelper
     public function getVariationsByExternalId($externalId)
     {
         $this->variationLookupRepository->hasExternalId($externalId);
-        $lookupResult = $this->variationLookupRepository->lookup();
+        $lookupResult = $this->variationLookupRepository->limit(0)->lookup();
 
         if (!empty($lookupResult)) {
             return $lookupResult;
