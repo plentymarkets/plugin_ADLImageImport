@@ -144,8 +144,13 @@ class ReadFilesService
                     );
                 continue;
             }
+
             $fileData['imageData'] = $this->getFileContents($file);
+
             $logData = [];
+            $itemId = null;
+            $variationIdList = [];
+
             foreach ($variations as $variation) {
                 if (is_null($variation)) {
                     $this->getLogger(__METHOD__)
@@ -160,14 +165,34 @@ class ReadFilesService
                     break;
                 }
 
-                $fileData['itemId'] = $variation['itemId'];
-                $fileData['variationId'] = $variation['variationId'];
+                if ($itemId == null){
+                    $itemId = $variation['itemId'];
+                } else {
+                    if ($itemId != $variation['itemId']){
+                        $this->getLogger(__METHOD__)
+                            ->error(
+                                PluginConfiguration::PLUGIN_NAME . '::error.readFilesError',
+                                [
+                                    'errorMsg' => 'Only one item is allowed with variations that have this external ID:' . $fileData['externalId'],
+                                    'fileName' => $file
+                                ]
+                            );
+                        $fileImportError = true;
+                        break;
+                    }
+                }
+
+                $variationIdList[] = $variation['variationId'];
+
+                //$fileData['itemId'] = $variation['itemId'];
+                //$fileData['variationId'] = $variation['variationId'];
 
                 $logData[] = [
                     'item'  => $fileData['itemId'],
                     'variation' => $fileData['variationId']
                 ];
 
+                /*
                 if (!$this->variationHelper->addImageToVariation(
                     [
                         'fileType' => $fileData['fileExtension'],
@@ -190,6 +215,20 @@ class ReadFilesService
                         );
                     $fileImportError = true;
                 }
+                */
+            }
+            if (!$fileImportError){
+                $fileImportError = !$this->variationHelper->addImageToMultipleVariations(
+                    [
+                        'fileType' => $fileData['fileExtension'],
+                        'uploadFileName' => $fileData['fileName'],
+                        'uploadImageData' => $fileData['imageData'],
+                        'itemId' => $itemId,
+                        'variationId' => $fileData['variationId'],
+                    ],
+                    $variationIdList,
+                    $fileData['imagePosition']
+                );
             }
             if (!$fileImportError){
                 $fileData['deleted'] = $this->deleteFileFromFtp($file);
