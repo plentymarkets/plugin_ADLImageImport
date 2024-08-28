@@ -184,38 +184,10 @@ class ReadFilesService
 
                 $variationIdList[] = $variation['variationId'];
 
-                //$fileData['itemId'] = $variation['itemId'];
-                //$fileData['variationId'] = $variation['variationId'];
-
                 $logData[] = [
-                    'item'  => $fileData['itemId'],
-                    'variation' => $fileData['variationId']
+                    'item'  => $variation['itemId'],
+                    'variation' => $variation['variationId']
                 ];
-
-                /*
-                if (!$this->variationHelper->addImageToVariation(
-                    [
-                        'fileType' => $fileData['fileExtension'],
-                        'uploadFileName' => $fileData['fileName'],
-                        'uploadImageData' => $fileData['imageData'],
-                        'itemId' => $fileData['itemId'],
-                        'variationId' => $fileData['variationId'],
-                    ],
-                    (int)$fileData['variationId'],
-                    (int)$fileData['imagePosition']
-                )
-                ) {
-                    $this->getLogger(__METHOD__)
-                        ->error(
-                            PluginConfiguration::PLUGIN_NAME . '::error.readFilesError',
-                            [
-                                'errorMsg' => 'The image could not be imported!',
-                                'fileName' => $file
-                            ]
-                        );
-                    $fileImportError = true;
-                }
-                */
             }
             if (!$fileImportError){
                 $fileImportError = !$this->variationHelper->addImageToMultipleVariations(
