@@ -133,7 +133,7 @@ class ReadFilesService
             }
 
             $variations = $this->variationHelper->getVariationsByExternalId($fileData['externalId']);
-            if (count($variations) == 0) {
+            if (($variations == null) || (count($variations) == 0)) {
                 $this->getLogger(__METHOD__)
                     ->error(
                         PluginConfiguration::PLUGIN_NAME . '::error.readFilesError',
